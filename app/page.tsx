@@ -1,11 +1,9 @@
-import { Inter, Prompt } from "next/font/google";
+"use client";
 
-const prompt = Prompt({ subsets: ["latin"], weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"] });
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return (
-    <section className="h-screen">
-      <h1 className={prompt.className}>hello world</h1>;
-    </section>
-  );
+  const router = useRouter();
+  router.push("/login");
+  return <></>;
 }

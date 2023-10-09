@@ -1,8 +1,21 @@
 "use client";
+import React, { useState } from "react";
 import Link from "next/link";
-import React from "react";
+import { useRouter } from "next/navigation";
+import { deleteCookie } from "cookies-next";
 
-export default function UsrNavbar() {
+const UsrNavbar = () => {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // Implement your logout logic here
+    // For example, clear user session or call logout API
+    deleteCookie("token");
+    deleteCookie("is_active");
+    // After successful logout, redirect user to login page
+    router.push("/login");
+  };
+
   return (
     <nav className="navbar bg-base-100">
       <div className="navbar-start">
@@ -39,9 +52,22 @@ export default function UsrNavbar() {
           </li>
         </ul>
       </div>
-      <div className="navbar-end ">
-        <a className="btn rounded-full w-12 h-12"></a>
+      <div className="navbar-end">
+        <div className="dropdown dropdown-end">
+          <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+            <div className="w-10 rounded-full">
+              <img src="/images/stock/photo-1534528741775-53994a69daeb.jpg" />
+            </div>
+          </label>
+          <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+            <li>
+              <button onClick={(e) => handleLogout()}>Logout</button>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
   );
-}
+};
+
+export default UsrNavbar;

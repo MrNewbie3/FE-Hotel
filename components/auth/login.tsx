@@ -1,3 +1,7 @@
+"use client";
+import { setCookie } from "cookies-next";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 
@@ -10,15 +14,43 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
+  const [loading, setLoading] = useState<Boolean>(false);
+  const router = useRouter();
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<FormInput>();
 
-  const onSubmit: SubmitHandler<FormInput> = (data) => console.log(data);
+  const onSubmit: SubmitHandler<FormInput> = async (data: any) => {
+    setLoading(true);
+    try {
+      const post = await fetch(process.env.NEXT_PUBLIC_API + "auth", {
+        // @ts-ignore
+        body: JSON.stringify(data),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!post) {
+        setLoading(false);
+        return alert("something went wrong");
+      }
+      const res = await post.json();
+      if (res.code !== 200) {
+        setLoading(false);
+        return alert(res.error || res.msg);
+      }
+      setCookie("token", res.data.access_token);
+      setCookie("role", res.data.role);
+      setLoading(false);
+      return router.push("user");
+    } catch (error) {
+      setLoading(false);
+      throw new Error(error as string);
+    }
+  };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -30,19 +62,29 @@ function Login() {
         <h2 className="text-2xl font-semibold mb-4">Login</h2>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">Email</label>
-          <input type="email" className="w-full px-3 py-2 placeholder-gray-400 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            {...register("email", { required: true })}
+            type="text"
+            className="w-full px-3 py-2 placeholder-gray-400 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
+            placeholder="Username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          {errors.email && <p className="text-red-600 font-semibold text-sm">Email must not be empty</p>}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
           <div className="relative">
             <input
+              {...register("password", { required: true })}
               type={showPassword ? "text" : "password"}
               className="w-full px-3 py-2 placeholder-gray-400 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <button className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={togglePasswordVisibility}>
+            {errors.password && <p className="text-red-600 font-semibold text-sm">Password must not be empty</p>}
+            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={togglePasswordVisibility}>
               {showPassword ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -54,14 +96,22 @@ function Login() {
               )}
             </button>
           </div>
+          <p className="mt-4 text-sm font-semibold">
+            didn't have account?{" "}
+            <Link className="underline" href={"/register"}>
+              register here
+            </Link>
+          </p>
         </div>
-        <button
-          type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          // Replace with your login logic
-        >
-          Login
-        </button>
+        {loading ? (
+          <button type="button" disabled className="btn-neutral text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Login
+          </button>
+        ) : (
+          <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Login
+          </button>
+        )}
       </form>
     </div>
   );
